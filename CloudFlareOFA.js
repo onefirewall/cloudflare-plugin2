@@ -2,7 +2,7 @@ var dotenv = require('dotenv'),
     request = require('request'),
     _ = require('underscore');
 
-var CloudFlareOFA = function (api_url_zones, api_url, api_url_post_delete, x_auth_key, x_auth_email, addBlockIp, id) {
+var CloudFlareOFA = function (api_url_zones, api_url, x_auth_key, x_auth_email, addBlockIp, id, zoneId) {
     var headers = {
             'X-Auth-Email': x_auth_email,
             'X-Auth-Key': x_auth_key,
@@ -14,14 +14,14 @@ var CloudFlareOFA = function (api_url_zones, api_url, api_url_post_delete, x_aut
             headers: headers
         },
         optionsPOST = {
-            url: api_url_post_delete,
+            url: api_url + zoneId + '/firewall/access_rules/rules',
             method: 'POST',
             headers: headers,
             json: true,
             body: addBlockIp
         },
         optionsDELETE = {
-            url: api_url_post_delete + id,
+            url: api_url + zoneId + '/firewall/access_rules/rules' + id,
             method: 'DELETE',
             headers: headers
         };
@@ -59,16 +59,11 @@ var CloudFlareOFA = function (api_url_zones, api_url, api_url_post_delete, x_aut
 
 function createMyZones(validElements, api_url, headers, callback) {
     var resp = JSON.parse(validElements),
-        result = resp.result,
-        arrayListData = [];
+        result = resp.result;
     
     _.map(result, function (item) {
-    	arrayListData.push({
-    		result: createGetRest(item.id, api_url, headers, callback),
-    	    zoneId: item.id
-    	});
+    	createGetRest(item.id, api_url, headers, callback);
     });
-    return arrayListData;
 };
 
 function createGetRest(zoneId, api_url, headers, callback) {
@@ -83,11 +78,11 @@ function createGetRest(zoneId, api_url, headers, callback) {
             if (error || response.statusCode !== 200) {
                 return callback(error || body);
             }
-        callback(createMyJson(body));
+        callback(createMyJson(body, zoneId));
     });
 };
 
-function createMyJson(validElements) {
+function createMyJson(validElements, zoneId) {
     var resp = JSON.parse(validElements),
         result = resp.result,
         arrayList = [];
@@ -96,7 +91,8 @@ function createMyJson(validElements) {
         arrayList.push({
         	id: item.id,
             ip: item.configuration.value,
-            mode: item.mode
+            mode: item.mode,
+            zoneId: zoneId
         });
     });
     return arrayList;
