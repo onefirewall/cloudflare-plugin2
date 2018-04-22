@@ -1,24 +1,18 @@
 var CloudFlareOFA = require('./CloudFlareOFA.js'),
     api_url_zones = "https://api.cloudflare.com/client/v4/zones?page=1&per_page=1000&order=type&direction=asc",
-    api_url_delete = "https://api.cloudflare.com/client/v4/user/subscriptions/",
     api_url = "https://api.cloudflare.com/client/v4/zones/",
-    api_url_post = "https://api.cloudflare.com/client/v4/user/firewall/access_rules/rule",
-    x_auth_key = "xxxx",
-    x_auth_email = "xxxxx",
+    api_url_post_delete = "https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules",
+    x_auth_key = "globalkey",
+    x_auth_email = "email",
     ip = "3.3.3.3",
     mode = "block",
-    id = "1afb8156a9c17f728c4ecb1c2d3e22a8",
+    id = "id_to_delete_IP",
     addBlockIp = {"mode": mode, "configuration": {"target": "ip", "value": ip}, "notes": "Test OFA"},
-    cloudflareOFA = new CloudFlareOFA(api_url_zones, api_url, api_url_delete, api_url_post, x_auth_key, x_auth_email, addBlockIp, id);
-
-cloudflareOFA.getAllZones(
-    function callback (jsonArray) {
-        console.log(JSON.stringify(jsonArray));
-});
+    cloudflareOFA = new CloudFlareOFA(api_url_zones, api_url, api_url_post_delete, x_auth_key, x_auth_email, addBlockIp, id);
 
 cloudflareOFA.getAllBlockedIPS(
-    function callback (jsonArray) {
-        console.log(JSON.stringify(jsonArray));
+   function callback (data) {
+       console.log(JSON.stringify(data));
 });
 
 cloudflareOFA.setAllBlockedIPS(
@@ -27,6 +21,6 @@ cloudflareOFA.setAllBlockedIPS(
 });
 
 cloudflareOFA.deleteIPS(
-    function callback (response) {
-        console.log(JSON.stringify(response));
+   function callback (response) {
+       console.log(JSON.stringify(response));
 });
