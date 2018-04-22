@@ -2,7 +2,7 @@ var dotenv = require('dotenv'),
     request = require('request'),
     _ = require('underscore');
 
-var CloudFlareOFA = function (api_url_zones, api_url, api_url_delete, api_url_post, x_auth_key, x_auth_email, addBlockIp, id) {
+var CloudFlareOFA = function (api_url_zones, api_url, api_url_post_delete, x_auth_key, x_auth_email, addBlockIp, id) {
     var headers = {
             'X-Auth-Email': x_auth_email,
             'X-Auth-Key': x_auth_key,
@@ -13,41 +13,26 @@ var CloudFlareOFA = function (api_url_zones, api_url, api_url_delete, api_url_po
             method: 'GET',
             headers: headers
         },
-        optionsGET = {
-            url: api_url + id + '?page=1&per_page=1000&order=type&direction=asc',
-            method: 'GET',
-            headers: headers
-        },
         optionsPOST = {
-            url: api_url_post,
+            url: api_url_post_delete,
             method: 'POST',
             headers: headers,
             json: true,
             body: addBlockIp
         },
         optionsDELETE = {
-            url: api_url_delete + id,
+            url: api_url_post_delete + id,
             method: 'DELETE',
             headers: headers
         };
 
-    this.getAllZones = function (callback) {
-        request(optionsGetZones,
-            function (error, response, body) {
-                if (error || response.statusCode !== 200) {
-                    return callback(error || body);
-                }
-                callback(createMyZones(body));
-            });
-    };
-
     this.getAllBlockedIPS = function (callback) {
-        request(optionsGET,
+    	request(optionsGetZones,
             function (error, response, body) {
                 if (error || response.statusCode !== 200) {
                     return callback(error || body);
                 }
-                callback(createMyJson(body));
+                callback(createMyZones(body, api_url, headers, callback));
             });
     };
 
@@ -72,27 +57,44 @@ var CloudFlareOFA = function (api_url_zones, api_url, api_url_delete, api_url_po
     };
 };
 
-function createMyZones(validElements) {
-    var zonesList = [],
-        resp = JSON.parse(validElements),
-        result = resp.result;
-
+function createMyZones(validElements, api_url, headers, callback) {
+    var resp = JSON.parse(validElements),
+        result = resp.result,
+        arrayListData = [];
+    
     _.map(result, function (item) {
-        zonesList.push({
-            id: item.id
-        });
+    	arrayListData.push({
+    		result: createGetRest(item.id, api_url, headers, callback),
+    	    zoneId: item.id
+    	});
     });
-    return zonesList;
+    return arrayListData;
+};
+
+function createGetRest(zoneId, api_url, headers, callback) {
+    var respData,
+        optionsGET = {
+            url: api_url + zoneId + '/firewall/access_rules/rules?page=1&per_page=1000&order=type&direction=asc',
+            method: 'GET',
+            headers: headers
+        };
+    request(optionsGET,
+        function (error, response, body) {
+            if (error || response.statusCode !== 200) {
+                return callback(error || body);
+            }
+        callback(createMyJson(body));
+    });
 };
 
 function createMyJson(validElements) {
-    var arrayList = [],
-        resp = JSON.parse(validElements),
-        result = resp.result;
+    var resp = JSON.parse(validElements),
+        result = resp.result,
+        arrayList = [];
 
     _.map(result, function (item) {
         arrayList.push({
-            id: item.id,
+        	id: item.id,
             ip: item.configuration.value,
             mode: item.mode
         });
