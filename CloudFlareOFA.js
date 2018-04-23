@@ -82,7 +82,7 @@ function createGetRest(size, zoneId, api_url, headers, dataIndex, callback) {
     request(optionsGET,
         function (error, response, body) {
             if (error || response.statusCode !== 200) {
-                return callback(error || body);
+                callback(error || body);
             }
 
             data.push(createMyJson(body, zoneId));
