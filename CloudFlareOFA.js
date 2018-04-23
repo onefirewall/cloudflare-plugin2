@@ -32,7 +32,7 @@ var CloudFlareOFA = function (api_url_zones, api_url, x_auth_key, x_auth_email, 
                 if (error || response.statusCode !== 200) {
                     return callback(error || body);
                 }
-                callback(createMyZones(body, api_url, headers, callback));
+                createMyZones(body, api_url, headers, callback);
             });
     };
 
@@ -59,14 +59,16 @@ var CloudFlareOFA = function (api_url_zones, api_url, x_auth_key, x_auth_email, 
 
 function createMyZones(validElements, api_url, headers, callback) {
     var resp = JSON.parse(validElements),
-        result = resp.result;
+        result = resp.result,
+        dataIndex = 0;
     
     _.map(result, function (item) {
-    	createGetRest(item.id, api_url, headers, callback);
+    	dataIndex++;
+    	createGetRest(result.length, item.id, api_url, headers, dataIndex, callback);
     });
 };
 
-function createGetRest(zoneId, api_url, headers, callback) {
+function createGetRest(size, zoneId, api_url, headers, dataIndex, callback) {
     var respData,
         optionsGET = {
             url: api_url + zoneId + '/firewall/access_rules/rules?page=1&per_page=1000&order=type&direction=asc',
@@ -78,24 +80,28 @@ function createGetRest(zoneId, api_url, headers, callback) {
             if (error || response.statusCode !== 200) {
                 return callback(error || body);
             }
-        callback(createMyJson(body, zoneId));
+        if (dataIndex == size) {
+        	callback(createMyJson(body, zoneId));
+        } else {
+        	createMyJson(body, zoneId)
+        }
     });
 };
 
 function createMyJson(validElements, zoneId) {
     var resp = JSON.parse(validElements),
         result = resp.result,
-        arrayList = [];
+        arrayListData = [];
 
     _.map(result, function (item) {
-        arrayList.push({
-            id: item.id,
+        arrayListData.push({
+        	id: item.id,
             ip: item.configuration.value,
             mode: item.mode,
             zoneId: zoneId
         });
     });
-    return arrayList;
+    return arrayListData;
 };
 
 module.exports = CloudFlareOFA;
