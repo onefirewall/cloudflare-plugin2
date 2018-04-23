@@ -30,12 +30,16 @@ var CloudFlareOFA = function (x_auth_key, x_auth_email) {
 
     //var myown = new CloudFlareOFA(api_url_zones, api_url, x_auth_key, x_auth_email)
 
-    this.getAllZones = function(page, zones, callback){
-        getAllZonesBACKEND(headers, page, zones, callback)
+    this.getAllZones = function(callback){
+        getAllZonesBACKEND(headers, 1, [], callback)
     }
 
-    this.getIPsPerZone = function(zoneID, page, returnArray, callback){
-        getIPsPerZoneBACKEND(headers, zoneID, page, returnArray, callback)
+    this.getIPsPerZone = function(zoneID, callback){
+        getIPsPerZoneBACKEND(headers, zoneID, 1, [], callback)
+    }
+
+    this.getParentIPs = function(callback){
+        getParentIPsBACKEND(headers, 1, [], callback)
     }
 
     this.getAllBlockedIPS = function (callback) {
@@ -118,7 +122,11 @@ function getIPsPerZoneBACKEND(headers, zoneID, page, returnArray, callback){
                         notes: body.result[i].notes,
                         mode: body.result[i].mode
                     }
-                    returnArray.push(entry)
+                    if(body.result[i].configuration.target==="ip"){
+                        entry.ip = body.result[i].configuration.value
+                        returnArray.push(entry)
+                    }
+                    
                 }
                 if(body.result_info.total_pages===page){
                     callback(zoneID, returnArray)
@@ -129,6 +137,44 @@ function getIPsPerZoneBACKEND(headers, zoneID, page, returnArray, callback){
         }
     )
 }
+
+function getParentIPsBACKEND(headers, page, returnArray, callback){
+    httpHEADER = {
+        url: "https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules?page=" + page + "&per_page=1000",
+        method: 'GET',
+        headers: headers
+    }
+    request(httpHEADER,
+        function (error, response, body) {
+            if (error || response.statusCode !== 200) {
+                console.error(error)
+                callback(null)
+            }else{
+                var body = JSON.parse(body)
+
+                for(i=0;i<body.result.length;i++){
+                    var entry = {
+                        id: body.result[i].id,
+                        notes: body.result[i].notes,
+                        mode: body.result[i].mode
+                    }
+                    if(body.result[i].configuration.target==="ip"){
+                        entry.ip = body.result[i].configuration.value
+                        returnArray.push(entry)
+                    }
+                    
+                }
+                if(body.result_info.total_pages===page){
+                    callback(returnArray)
+                }else{
+                    getParentIPsBACKEND(headers, page+1, returnArray, callback)
+                }
+            }
+        }
+    )
+}
+
+
 
 function createMyZones(validElements, api_url, headers, callback) {
     var resp = JSON.parse(validElements),
