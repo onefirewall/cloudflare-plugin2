@@ -81,9 +81,9 @@ function createGetRest(size, zoneId, api_url, headers, dataIndex, callback) {
                 return callback(error || body);
             }
         if (dataIndex == size) {
-        	callback(createMyJson(body, zoneId));
+            callback(createMyJson(body, zoneId));
         } else {
-        	createMyJson(body, zoneId)
+            createMyJson(body, zoneId)
         }
     });
 };
