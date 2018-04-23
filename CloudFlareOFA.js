@@ -3,32 +3,11 @@ var dotenv = require('dotenv'),
     _ = require('underscore');
 
 var CloudFlareOFA = function (x_auth_key, x_auth_email) {
-    var headers = {
-            'X-Auth-Email': x_auth_email,
-            'X-Auth-Key': x_auth_key,
-            'Content-Type': 'application/json'
-        },
-
-        optionsGetZones = {
-            url: "api_url_zones",
-            method: 'GET',
-            headers: headers
-        },
-
-        optionsPOST = {
-            url: "api_url" + '/firewall/access_rules/rules',
-            method: 'POST',
-            headers: headers,
-            json: true,
-            body: 'addBlockIp'
-        },
-        optionsDELETE = {
-            url: "api_url" + 'zoneId' + '/firewall/access_rules/rules' + 'id',
-            method: 'DELETE',
-            headers: headers
-        };
-
-    //var myown = new CloudFlareOFA(api_url_zones, api_url, x_auth_key, x_auth_email)
+    var headers =   {
+                        'X-Auth-Email': x_auth_email,
+                        'X-Auth-Key': x_auth_key,
+                        'Content-Type': 'application/json'
+                    }
 
     this.getAllZones = function(callback){
         getAllZonesBACKEND(headers, 1, [], callback)
