@@ -1,6 +1,4 @@
-var dotenv = require('dotenv'),
-    request = require('request'),
-    _ = require('underscore');
+var request = require('request')
 
 var CloudFlareOFA = function (x_auth_key, x_auth_email) {
     var headers =   {
