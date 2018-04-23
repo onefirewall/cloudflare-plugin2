@@ -95,7 +95,7 @@ function createMyJson(validElements, zoneId) {
 
     _.map(result, function (item) {
         arrayListData.push({
-        	id: item.id,
+            id: item.id,
             ip: item.configuration.value,
             mode: item.mode,
             zoneId: zoneId
