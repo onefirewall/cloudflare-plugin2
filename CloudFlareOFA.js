@@ -42,39 +42,50 @@ var CloudFlareOFA = function (x_auth_key, x_auth_email) {
         getParentIPsBACKEND(headers, 1, [], callback)
     }
 
-    this.getAllBlockedIPS = function (callback) {
-    	request(optionsGetZones,
+    this.addNewIP = function (action, callback) {
+       
+        var httpHEADER = {
+            url:  "https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules",
+            method: 'POST',
+            headers: headers,
+            json: true,
+            body: action
+        }
+        request(httpHEADER,
+            function (error, response, body) {
+                //console.log("Error: " + response.statusCode)
+                if (error || response.statusCode !== 200) {
+                    console.error(error)
+                    callback(null)
+                }else{
+                    callback(response.statusCode)
+                }
+            }
+        )
+    }
+
+    this.deleteIP = function (id, callback) {
+
+        var httpHEADER = {
+            url:  "https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules/" + id,
+            method: 'DELETE',
+            headers: headers
+        }
+        request(httpHEADER,
             function (error, response, body) {
                 if (error || response.statusCode !== 200) {
-                    callback(error || body);
+                    console.error(error)
+                    callback(null)
+                }else{
+                    callback(response.statusCode)
                 }
+                
+            }
+        )
+    }
 
-                console.log(body)
-                console.log("==========================")
-                createMyZones(body, api_url, headers, callback);
-            });
-    };
 
-    this.setAllBlockedIPS = function (callback) {
-        request(optionsPOST,
-            function (error, response, body) {
-                if (error || response.statusCode !== 200) {
-                    callback(error);
-                }
-                callback(response.statusCode);
-            });
-    };
-
-    this.deleteIPS = function (callback) {
-        request(optionsDELETE,
-            function (error, response, body) {
-                if (error || response.statusCode !== 200) {
-                    callback(error);
-                }
-                callback(response.statusCode);
-            });
-    };
-};
+}
 
 function getAllZonesBACKEND(headers, page, zones, callback){
     httpHEADER = {
@@ -122,7 +133,7 @@ function getIPsPerZoneBACKEND(headers, zoneID, page, returnArray, callback){
                         notes: body.result[i].notes,
                         mode: body.result[i].mode
                     }
-                    if(body.result[i].configuration.target==="ip"){
+                    if(body.result[i].configuration.target==="ip" || body.result[i].configuration.target==="ip_range"){
                         entry.ip = body.result[i].configuration.value
                         returnArray.push(entry)
                     }
@@ -158,7 +169,7 @@ function getParentIPsBACKEND(headers, page, returnArray, callback){
                         notes: body.result[i].notes,
                         mode: body.result[i].mode
                     }
-                    if(body.result[i].configuration.target==="ip"){
+                    if(body.result[i].configuration.target==="ip" || body.result[i].configuration.target==="ip_range"){
                         entry.ip = body.result[i].configuration.value
                         returnArray.push(entry)
                     }
@@ -174,56 +185,5 @@ function getParentIPsBACKEND(headers, page, returnArray, callback){
     )
 }
 
-
-
-function createMyZones(validElements, api_url, headers, callback) {
-    var resp = JSON.parse(validElements),
-        result = resp.result,
-        dataIndex = 0;
-
-    _.map(result, function (item) {
-    	dataIndex++;
-    	createGetRest(result.length, item.id, api_url, headers, dataIndex, callback);
-    });
-};
-
-function createGetRest(size, zoneId, api_url, headers, dataIndex, callback) {
-    var respData,
-        data = [],
-        optionsGET = {
-            url: api_url + zoneId + '/firewall/access_rules/rules?page=1&per_page=4&order=type&direction=asc',
-            method: 'GET',
-            headers: headers
-        };
-
-    request(optionsGET,
-        function (error, response, body) {
-            if (error || response.statusCode !== 200) {
-                callback(error || body);
-            }
-
-            data.push(createMyJson(body, zoneId));
-
-            if (dataIndex == size) {
-                callback(data);
-            }
-    });
-};
-
-function createMyJson(validElements, zoneId) {
-    var resp = JSON.parse(validElements),
-        result = resp.result,
-        arrayListData = [];
-
-    _.map(result, function (item) {
-        arrayListData.push({
-            id: item.id,
-            ip: item.configuration.value,
-            mode: item.mode,
-            zoneId: zoneId
-        });
-    });
-    return arrayListData;
-};
 
 module.exports = CloudFlareOFA;
