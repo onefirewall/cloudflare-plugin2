@@ -15,6 +15,17 @@ var CloudFlareOFA = function (x_auth_key, x_auth_email) {
         getIPsPerZoneBACKEND(headers, zoneID, 1, [], callback)
     }
 
+    this.getIPs_For_ALL_Zones = function(zones, callback){
+        getIPs_For_ALL_Zones(headers, 1, zones, 0, [], function getUser(returnArrayZONES){
+            getParentIPsBACKEND(headers, 1, [], function callback2(returnArrayUSER){
+                for(i=0;i<returnArrayUSER.length;i++){
+                    returnArrayZONES.push(returnArrayUSER[i])
+                }
+                callback(returnArrayZONES)
+            })
+        })
+    }
+
     this.getParentIPs = function(callback){
         getParentIPsBACKEND(headers, 1, [], callback)
     }
@@ -120,6 +131,50 @@ function getIPsPerZoneBACKEND(headers, zoneID, page, returnArray, callback){
                     callback(zoneID, returnArray)
                 }else{
                     getIPsPerZoneBACKEND(headers, zoneID, page+1, returnArray, callback)
+                }
+            }
+        }
+    )
+}
+
+function getIPs_For_ALL_Zones(headers, page, zones, zone_indx, returnArray, callback){
+    //callback()
+    //return
+    httpHEADER = {
+        url: "https://api.cloudflare.com/client/v4/zones/" + zones[zone_indx] + "/firewall/access_rules/rules?page=" + page + "&per_page=1000",
+        method: 'GET',
+        headers: headers
+    }
+    request(httpHEADER,
+        function (error, response, body) {
+            if (error || response.statusCode !== 200) {
+                console.error(error)
+                callback(null)
+            }else{
+                var body = JSON.parse(body)
+
+                for(i=0;i<body.result.length;i++){
+                    var entry = {
+                        id: body.result[i].id,
+                        notes: body.result[i].notes,
+                        mode: body.result[i].mode
+                    }
+                    if(body.result[i].configuration.target==="ip" || body.result[i].configuration.target==="ip_range"){
+                        entry.ip = body.result[i].configuration.value
+                        returnArray.push(entry)
+                    }
+                    
+                }
+                if(body.result_info.total_pages===page){
+                    if(zones[zone_indx+1]!=null && zones[zone_indx+1]!=undefined ){
+                        // END OF PAGES FOR tHE CURRENT ZONE
+                        getIPs_For_ALL_Zones(headers, 1, zones, zone_indx+1, returnArray, callback)
+                    }else{
+                        // END of ZONES and End of PAges
+                        callback(returnArray)
+                    }
+                }else{
+                    getIPs_For_ALL_Zones(headers, page+1, zones, zone_indx, returnArray, callback)
                 }
             }
         }

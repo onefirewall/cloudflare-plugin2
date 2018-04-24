@@ -14,31 +14,42 @@ var addBlockIp = {"mode": mode, "configuration": {"target": "ip", "value": ip}, 
 
 var cloudflareOFA = new CloudFlareOFA(x_auth_key, x_auth_email)
 
+var allEntries = []
 
-/*
+
 cloudflareOFA.getAllZones( 
     function callback(zones){
 
+        /*
         for(x=0; x<zones.length; x++){
             cloudflareOFA.getIPsPerZone(zones[x], function callback2(zoneID, returnArray){
                 console.log(zoneID + ": " + returnArray.length)
             })
         }
-
+        */
+        //var aa="as"
+        cloudflareOFA.getIPs_For_ALL_Zones(zones, function(returnArray){
+            console.log(returnArray.length)
+            console.log(aa)
+        })
     }
 )
-*/
+
 
 /*
 cloudflareOFA.getParentIPs(function callback2(returnArray){
-    console.log("Parent IPs: " + returnArray.length)
-    console.log(returnArray)
+    returnArray.forEach(element => {
+        allEntries.push(element)
+    });
+    //console.log("Parent IPs: " + returnArray.length)
+    console.log("IN: " + allEntries.length)
+    //console.log(returnArray)
 })
 */
+console.log("OUT: " + allEntries.length)
 
 
-
-
+/*
 var action = {"mode": "whitelist", "configuration": {"target": "ip", "value": "95.110.157.223"}, "notes": "Test OFA"}
 
 cloudflareOFA.addNewIP(action,
@@ -46,7 +57,7 @@ cloudflareOFA.addNewIP(action,
         console.log(response);
     }
 )
-
+*/
 
 
 /*
