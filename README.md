@@ -1,4 +1,4 @@
 # cloudflare-plugin
 
-## npm install request
+## npm install request sync-request
 ## node app

@@ -1,4 +1,5 @@
 var request = require('request')
+var sync_request = require('sync-request')
 
 var CloudFlareOFA = function (x_auth_key, x_auth_email) {
     var headers =   {
@@ -44,12 +45,36 @@ var CloudFlareOFA = function (x_auth_key, x_auth_email) {
                 //console.log("Error: " + response.statusCode)
                 if (error || response.statusCode !== 200) {
                     console.error(error)
-                    callback(null)
+                    callback(null, null)
                 }else{
-                    callback(response.statusCode)
+                    //console.log(body)
+                    //console.log(body.result.id)
+                    callback(response.statusCode, body.result.id)
                 }
             }
         )
+    }
+
+    this.sync_addNewIP = function (action) {
+       
+        var httpHEADER = {
+            url:  "https://api.cloudflare.com/client/v4/user/firewall/access_rules/rules",
+            method: 'POST',
+            headers: headers,
+            json: true,
+            body: action
+        }
+
+        try{
+            var res = sync_request('POST', httpHEADER.url,{ headers: headers, json: action } );
+            var body = JSON.parse(res.getBody('utf8'))
+            return body.result.id
+        }catch(e){
+            console.log(e)
+            return e
+        }
+
+
     }
 
     this.deleteIP = function (id, callback) {
